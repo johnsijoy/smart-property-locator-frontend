@@ -55,7 +55,7 @@ const Querypage = () => {
     if (!window.confirm("Are you sure you want to delete this query?")) return;
     try {
       const token = localStorage.getItem("access");
-      await axios.delete(`http://127.0.0.1:8000/api/accounts/contact/${id}/`, {
+      await axios.delete(`http://127.0.0.1:8000/api/accounts/contact/${id}/delete/`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

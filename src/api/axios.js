@@ -1,8 +1,12 @@
 // src/api/axios.js
 import axios from "axios";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ||  "https://smart-property-locator-backend-2.onrender.com/api/";
+// Base URL pointing to your backend API
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL ||
+  "https://smart-property-locator-backend-2.onrender.com/api/";
 
+// Create Axios instance
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -10,11 +14,17 @@ const axiosInstance = axios.create({
   },
 });
 
-// ✅ Request interceptor: add Authorization token automatically
+// -----------------------------
+// Request interceptor: add Authorization token automatically
+// -----------------------------
 axiosInstance.interceptors.request.use(
   (config) => {
     // Skip adding token for login/register/refresh endpoints
-    if (!config.url.includes("login") && !config.url.includes("register") && !config.url.includes("token")) {
+    if (
+      !config.url.includes("login") &&
+      !config.url.includes("register") &&
+      !config.url.includes("token")
+    ) {
       const access = localStorage.getItem("access");
       if (access) {
         config.headers.Authorization = `Bearer ${access}`;
@@ -25,13 +35,14 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ✅ Response interceptor: handle 401 & refresh token automatically
+// -----------------------------
+// Response interceptor: handle 401 & refresh token automatically
+// -----------------------------
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If 401 Unauthorized and not retry yet
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
@@ -43,27 +54,27 @@ axiosInstance.interceptors.response.use(
 
       const refreshToken = localStorage.getItem("refresh");
       if (!refreshToken) {
-        // No refresh token → logout
         localStorage.clear();
         window.location.href = "/login";
         return Promise.reject(error);
       }
 
       try {
-        // Request new access token
-        const response = await axios.post(`${API_BASE_URL}token/refresh/`, { refresh: refreshToken });
+        // Correct refresh URL
+        const response = await axios.post(
+          "https://smart-property-locator-backend-2.onrender.com/api/accounts/token/refresh/",
+          { refresh: refreshToken }
+        );
         const newAccess = response.data.access;
 
-        // Save new token
         localStorage.setItem("access", newAccess);
 
-        // Update Authorization header for axiosInstance and retry original request
+        // Update headers and retry original request
         axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${newAccess}`;
         originalRequest.headers.Authorization = `Bearer ${newAccess}`;
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        // Refresh failed → logout
         localStorage.clear();
         window.location.href = "/login";
         return Promise.reject(refreshError);
