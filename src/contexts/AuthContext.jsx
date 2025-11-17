@@ -60,29 +60,31 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Buyer Registration
-  const handleRegister = async (username, email, password) => {
-    try {
-      const response = await axios.post(
-        `${API_BASE}register/`,
-        { username, email, password },
-        { headers: { "Content-Type": "application/json" } }
-      );
+ // Buyer Registration
+const handleRegister = async (email, password) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE}register/`,
+      { email, password }, // no username
+      { headers: { "Content-Type": "application/json" } }
+    );
 
-      console.log("Registration success:", response.data);
-      return true;
-    } catch (error) {
-      console.error("Registration error:", error.response?.data || error.message);
+    console.log("Registration success:", response.data);
+    return true;
+  } catch (error) {
+    console.error("Registration error:", error.response?.data || error.message);
 
-      if (error.response?.data?.username) {
-        alert("Username: " + error.response.data.username[0]);
-      } else if (error.response?.data?.email) {
-        alert("Email: " + error.response.data.email[0]);
-      } else {
-        alert("Registration failed. Try again.");
-      }
-      return false;
+    if (error.response?.data?.email) {
+      alert("Email: " + error.response.data.email[0]);
+    } else if (error.response?.data?.password) {
+      alert("Password: " + error.response.data.password[0]);
+    } else {
+      alert("Registration failed. Try again.");
     }
-  };
+    return false;
+  }
+};
+
 
   const handleLogout = () => {
     localStorage.clear();
