@@ -1,7 +1,7 @@
 // src/api/axios.js
 import axios from "axios";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://127.0.0.1:8000/api/";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL ||  "https://smart-property-locator-backend-2.onrender.com/api/";
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
