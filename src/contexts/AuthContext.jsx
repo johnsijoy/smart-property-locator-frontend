@@ -7,11 +7,11 @@ const AuthContext = createContext();
 const API_BASE = "https://smart-property-locator-backend-2.onrender.com/api/accounts/";
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); // { username, role }
   const [token, setToken] = useState(localStorage.getItem("access") || null);
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage
+  // Load user from localStorage on mount
   useEffect(() => {
     const savedRole = localStorage.getItem("role");
     const savedUsername = localStorage.getItem("username");
@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // Login (Buyer / Admin)
+  // Buyer/Admin Login
   const handleLogin = async (username, password, role) => {
     try {
       const url =
@@ -41,6 +41,7 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (response.ok && data.access) {
+        // Save tokens & role
         localStorage.setItem("access", data.access);
         localStorage.setItem("refresh", data.refresh);
         localStorage.setItem("role", data.role || role.toLowerCase());
@@ -60,32 +61,35 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Buyer Registration
- // Buyer Registration
-const handleRegister = async (email, password) => {
-  try {
-    const response = await axios.post(
-      `${API_BASE}register/`,
-      { email, password }, // no username
-      { headers: { "Content-Type": "application/json" } }
-    );
+  const handleRegister = async (username, email, password) => {
+    try {
+      const response = await axios.post(
+        `${API_BASE}register/`,
+        { username, email, password },
+        { headers: { "Content-Type": "application/json" } }
+      );
 
-    console.log("Registration success:", response.data);
-    return true;
-  } catch (error) {
-    console.error("Registration error:", error.response?.data || error.message);
+      console.log("✅ Registration successful:", response.data);
+      return true; // success
+    } catch (error) {
+      console.error("❌ Registration error:", error.response?.data || error.message);
 
-    if (error.response?.data?.email) {
-      alert("Email: " + error.response.data.email[0]);
-    } else if (error.response?.data?.password) {
-      alert("Password: " + error.response.data.password[0]);
-    } else {
-      alert("Registration failed. Try again.");
+      // Show readable error
+      if (error.response?.data?.username) {
+        alert("Username: " + error.response.data.username[0]);
+      } else if (error.response?.data?.email) {
+        alert("Email: " + error.response.data.email[0]);
+      } else if (error.response?.data?.password) {
+        alert("Password: " + error.response.data.password[0]);
+      } else {
+        alert("Registration failed. Try again.");
+      }
+
+      return false; // failed
     }
-    return false;
-  }
-};
+  };
 
-
+  // Logout
   const handleLogout = () => {
     localStorage.clear();
     setUser(null);
@@ -110,4 +114,5 @@ const handleRegister = async (email, password) => {
   );
 };
 
+// Custom hook for easier usage
 export const useAuth = () => useContext(AuthContext);
