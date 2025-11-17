@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate, useLocation, Link as RouterLink } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   Container,
   Box,
@@ -21,21 +21,19 @@ import CloseIcon from "@mui/icons-material/Close";
 const LoginPage = () => {
   const { handleLogin } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState(""); // ✅ changed from username
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Dropdown menu
+  // Dropdown menu for role
   const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedRole, setSelectedRole] = useState("Buyer"); // Default role
+  const [selectedRole, setSelectedRole] = useState("Buyer"); // default
   const open = Boolean(anchorEl);
 
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
-
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
     handleMenuClose();
@@ -45,14 +43,14 @@ const LoginPage = () => {
     event.preventDefault();
     setError(null);
 
-    if (!username.trim() || !password) {
-      setError("Please enter both username and password.");
+    if (!email.trim() || !password) {
+      setError("Please enter both email and password.");
       return;
     }
 
     setLoading(true);
     try {
-      const success = await handleLogin(username.trim(), password, selectedRole);
+      const success = await handleLogin(email.trim(), password, selectedRole);
       setLoading(false);
 
       if (success) {
@@ -60,11 +58,9 @@ const LoginPage = () => {
           navigate("/properties", { replace: true });
         } else if (selectedRole.toLowerCase() === "admin") {
           navigate("/", { replace: true });
-        } else {
-          navigate("/", { replace: true });
         }
       } else {
-        setError("Invalid username or password.");
+        setError("Invalid email or password.");
       }
     } catch (err) {
       console.error("Login error:", err);
@@ -88,7 +84,7 @@ const LoginPage = () => {
           position: "relative",
         }}
       >
-        {/* 🔙 Back Arrow */}
+        {/* Back */}
         <IconButton
           onClick={() => navigate(-1)}
           sx={{ position: "absolute", top: 8, left: 8, color: "black" }}
@@ -96,7 +92,7 @@ const LoginPage = () => {
           <ArrowBackIcon />
         </IconButton>
 
-        {/* ❌ Close Icon */}
+        {/* Close */}
         <IconButton
           onClick={() => navigate("/")}
           sx={{ position: "absolute", top: 8, right: 8, color: "black" }}
@@ -104,7 +100,7 @@ const LoginPage = () => {
           <CloseIcon />
         </IconButton>
 
-        {/* ⋮ Role Dropdown */}
+        {/* Role Dropdown */}
         <IconButton
           onClick={handleMenuOpen}
           sx={{ position: "absolute", top: 8, right: 48, color: "black" }}
@@ -142,9 +138,10 @@ const LoginPage = () => {
             margin="normal"
             required
             fullWidth
-            label="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
 
           <TextField

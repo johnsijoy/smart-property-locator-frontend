@@ -26,34 +26,40 @@ export const AuthProvider = ({ children }) => {
   // --------------------------
   // Login (Buyer/Admin)
   // --------------------------
-  const handleLogin = async (username, password, role) => {
-    try {
-      const url = role.toLowerCase() === "admin"
+  const handleLogin = async (email, password, role) => {
+  try {
+    const url =
+      role.toLowerCase() === "admin"
         ? `${API_BASE}admin-login/`
         : `${API_BASE}login/`;
 
-      const response = await axios.post(url, { username, password });
-      const data = response.data;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }), // 👈 email
+    });
 
-      if (data.access) {
-        localStorage.setItem("access", data.access);
-        localStorage.setItem("refresh", data.refresh);
-        localStorage.setItem("role", data.role || role.toLowerCase());
-        localStorage.setItem("username", username);
+    const data = await response.json();
 
-        setUser({ username, role: data.role || role.toLowerCase() });
-        setToken(data.access);
-        return true;
-      } else {
-        console.error("Login failed:", data);
-        return false;
-      }
-    } catch (error) {
-      console.error("Login error:", error.response?.data || error.message);
-      alert(error.response?.data?.non_field_errors?.[0] || "Login failed");
+    if (response.ok && data.access) {
+      localStorage.setItem("access", data.access);
+      localStorage.setItem("refresh", data.refresh);
+      localStorage.setItem("role", data.role || role.toLowerCase());
+      localStorage.setItem("username", email); // store email if needed
+
+      setUser({ username: email, role: data.role || role.toLowerCase() });
+      setToken(data.access);
+      return true;
+    } else {
+      console.error("Login failed:", data);
       return false;
     }
-  };
+  } catch (error) {
+    console.error("Login error:", error);
+    return false;
+  }
+};
+
 
   // --------------------------
   // Registration (Buyer only)
