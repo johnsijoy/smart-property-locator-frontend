@@ -12,13 +12,13 @@ const ContactUs = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
 
-  // Handle input changes
+  // Update input values
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle form submission
+  // Form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -31,23 +31,21 @@ const ContactUs = () => {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/accounts/contact/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        "https://smart-property-locator-backend-2.onrender.com/api/accounts/contact/", 
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
 
       if (response.ok) {
         setSuccess(true);
         setFormData({ name: "", email: "", subject: "", message: "" });
       } else {
-        // If backend sends JSON error
-        try {
-          const errorData = await response.json();
-          console.error("Backend error:", errorData);
-        } catch {
-          console.error("Backend returned non-JSON error");
-        }
+        const errorData = await response.json();
+        console.error("Backend error:", errorData);
         setError("Failed to send message. Please try again.");
       }
     } catch (err) {
@@ -62,7 +60,6 @@ const ContactUs = () => {
         <Typography variant="h5" align="center" gutterBottom>
           Contact Us
         </Typography>
-
         <Typography variant="body1" align="center" sx={{ mb: 3 }}>
           Have questions or suggestions? Fill out the form below and we’ll get back to you.
         </Typography>

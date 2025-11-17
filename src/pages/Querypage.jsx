@@ -19,6 +19,8 @@ import {
 } from "@mui/material";
 import axios from "axios";
 
+const BACKEND_URL = "https://smart-property-locator-backend-2.onrender.com/api/accounts/contact/";
+
 const Querypage = () => {
   const [queries, setQueries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,15 +29,13 @@ const Querypage = () => {
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [replyText, setReplyText] = useState("");
 
-  // ✅ Fetch queries from backend (with admin token)
+  // ✅ Fetch queries from backend
   const fetchQueries = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("access"); // JWT from admin login
-      const response = await axios.get("http://127.0.0.1:8000/api/accounts/contact/", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const response = await axios.get(BACKEND_URL, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       setQueries(response.data);
     } catch (err) {
@@ -55,10 +55,8 @@ const Querypage = () => {
     if (!window.confirm("Are you sure you want to delete this query?")) return;
     try {
       const token = localStorage.getItem("access");
-      await axios.delete(`http://127.0.0.1:8000/api/accounts/contact/${id}/delete/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      await axios.delete(`${BACKEND_URL}${id}/delete/`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       setQueries((prev) => prev.filter((q) => q.id !== id));
     } catch (err) {
@@ -80,20 +78,15 @@ const Querypage = () => {
       alert("Please enter a reply message.");
       return;
     }
-
     try {
       const token = localStorage.getItem("access");
       await axios.put(
-        `http://127.0.0.1:8000/api/accounts/contact/${selectedQuery.id}/reply/`,
+        `${BACKEND_URL}${selectedQuery.id}/reply/`,
         { reply: replyText },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // ✅ Include JWT token
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // ✅ Instantly update frontend list
+      // Update frontend instantly
       setQueries((prev) =>
         prev.map((q) =>
           q.id === selectedQuery.id
@@ -182,8 +175,7 @@ const Querypage = () => {
 
                 <Divider sx={{ my: 1 }} />
                 <Typography variant="caption" color="text.secondary">
-                  Submitted on:{" "}
-                  {new Date(query.created_at).toLocaleString("en-IN")}
+                  Submitted on: {new Date(query.created_at).toLocaleString("en-IN")}
                 </Typography>
 
                 <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
