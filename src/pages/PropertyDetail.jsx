@@ -153,30 +153,52 @@ const PropertyDetail = () => {
   };
 
   useEffect(() => {
-    const fetchProperty = async () => {
-      setLoading(true);
-      try {
-        const res = await axiosInstance.get(`/properties/${id}/`);
-        setProperty(res.data);
+  const fetchPropertyAndAmenities = async () => {
+    setLoading(true);
+    try {
+      // 1️⃣ Fetch property
+      const res = await axiosInstance.get(`/properties/${id}/`);
+      setProperty(res.data);
 
-        // Fetch amenities after property is loaded
-        const lat = Number(res.data.latitude);
-        const lng = Number(res.data.longitude);
-        if (lat && lng) {
-          fetchNearbyAmenities(lat, lng).then(setNearbyAmenities);
-        }
-      } catch (err) {
-        console.error("Error fetching property:", err);
-        setSnackbarInfo({ severity: "error", message: "Failed to load property." });
-        setSnackbarOpen(true);
-      } finally {
-        setLoading(false);
+      // 2️⃣ Validate coordinates
+      const lat = safeNumber(res.data.latitude);
+      const lng = safeNumber(res.data.longitude);
+      if (lat !== null && lng !== null) {
+        // 3️⃣ Fetch nearby amenities with retry
+        const fetchNearbyAmenitiesWithRetry = async (lat, lng, retries = 2) => {
+          for (let i = 0; i <= retries; i++) {
+            try {
+              const amenities = await fetchNearbyAmenities(lat, lng);
+              if (amenities.length > 0) return amenities;
+            } catch (err) {
+              console.warn(`Amenities fetch attempt ${i + 1} failed`, err);
+            }
+            await new Promise((r) => setTimeout(r, 1000)); // wait 1s before retry
+          }
+          return []; // fallback empty array
+        };
+
+        const amenities = await fetchNearbyAmenitiesWithRetry(lat, lng);
+        setNearbyAmenities(amenities);
+      } else {
+        setNearbyAmenities([]); // fallback if coords invalid
       }
-    };
+    } catch (err) {
+      console.error("Error fetching property or amenities:", err);
+      setSnackbarInfo({
+        severity: "error",
+        message: "Failed to load property or nearby amenities.",
+      });
+      setSnackbarOpen(true);
+    } finally {
+      setLoading(false);
+      setFav(isFavorite(id));
+    }
+  };
 
-    fetchProperty();
-    setFav(isFavorite(id));
-  }, [id]);
+  fetchPropertyAndAmenities();
+}, [id]);
+
 
   const handleToggleFavorite = () => {
     const newState = toggleFavorite(id);
