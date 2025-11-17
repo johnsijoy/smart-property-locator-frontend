@@ -29,11 +29,11 @@ const Querypage = () => {
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [replyText, setReplyText] = useState("");
 
-  // ✅ Fetch queries from backend
+  // ✅ Fetch queries
   const fetchQueries = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("access"); // JWT from admin login
+      const token = localStorage.getItem("access"); // JWT token from admin login
       const response = await axios.get(BACKEND_URL, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -65,14 +65,14 @@ const Querypage = () => {
     }
   };
 
-  // ✅ Open reply popup
+  // ✅ Open reply dialog
   const handleReplyClick = (query) => {
     setSelectedQuery(query);
     setReplyText(query.reply || "");
     setOpenReply(true);
   };
 
-  // ✅ Send reply to backend
+  // ✅ Send reply
   const handleSendReply = async () => {
     if (!replyText.trim()) {
       alert("Please enter a reply message.");
@@ -86,7 +86,6 @@ const Querypage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Update frontend instantly
       setQueries((prev) =>
         prev.map((q) =>
           q.id === selectedQuery.id
