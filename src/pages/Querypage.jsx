@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Alert,
 } from "@mui/material";
 import axios from "axios";
 
@@ -28,19 +29,23 @@ const Querypage = () => {
   const [openReply, setOpenReply] = useState(false);
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [replyText, setReplyText] = useState("");
+  const [replyError, setReplyError] = useState(null);
 
-  // ✅ Fetch queries
+  // Fetch queries
   const fetchQueries = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const token = localStorage.getItem("access"); // JWT token from admin login
+      const token = localStorage.getItem("access");
       const response = await axios.get(BACKEND_URL, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       setQueries(response.data);
     } catch (err) {
       console.error("Error fetching queries:", err);
-      setError("Failed to load queries. Please try again later.");
+      setError("Failed to load queries. Please check your connection or login again.");
     } finally {
       setLoading(false);
     }
@@ -50,7 +55,7 @@ const Querypage = () => {
     fetchQueries();
   }, []);
 
-  // ✅ Delete query
+  // Delete query
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this query?")) return;
     try {
@@ -61,31 +66,38 @@ const Querypage = () => {
       setQueries((prev) => prev.filter((q) => q.id !== id));
     } catch (err) {
       console.error("Error deleting query:", err);
-      alert("Error deleting query.");
+      alert("Error deleting query. Make sure you are logged in as admin.");
     }
   };
 
-  // ✅ Open reply dialog
+  // Open reply dialog
   const handleReplyClick = (query) => {
     setSelectedQuery(query);
     setReplyText(query.reply || "");
+    setReplyError(null);
     setOpenReply(true);
   };
 
-  // ✅ Send reply
+  // Send reply
   const handleSendReply = async () => {
     if (!replyText.trim()) {
-      alert("Please enter a reply message.");
+      setReplyError("Reply cannot be empty.");
       return;
     }
     try {
       const token = localStorage.getItem("access");
-      await axios.put(
+      const response = await axios.put(
         `${BACKEND_URL}${selectedQuery.id}/reply/`,
         { reply: replyText },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
 
+      // Update frontend
       setQueries((prev) =>
         prev.map((q) =>
           q.id === selectedQuery.id
@@ -96,16 +108,19 @@ const Querypage = () => {
 
       setOpenReply(false);
       setReplyText("");
-      alert("Reply sent successfully and email delivered.");
+      alert(response.data.message || "Reply sent successfully!");
     } catch (err) {
       console.error("Error sending reply:", err);
-      alert("Failed to send reply. Please log in as admin again.");
+      setReplyError(
+        err.response?.data?.error ||
+        "Failed to send reply. Check your token or backend."
+      );
     }
   };
 
   return (
     <Container maxWidth="md" sx={{ mt: 8, mb: 8 }}>
-      <Box sx={{ p: 4, bgcolor: "#ffffff", borderRadius: 2, boxShadow: 3 }}>
+      <Box sx={{ p: 4, bgcolor: "#fff", borderRadius: 2, boxShadow: 3 }}>
         <Typography
           variant="h5"
           align="center"
@@ -121,9 +136,9 @@ const Querypage = () => {
             <Typography>Loading queries...</Typography>
           </Box>
         ) : error ? (
-          <Typography align="center" sx={{ mt: 3, color: "red" }}>
+          <Alert severity="error" sx={{ mt: 2 }}>
             {error}
-          </Typography>
+          </Alert>
         ) : queries.length === 0 ? (
           <Typography align="center" sx={{ mt: 3, color: "#800000" }}>
             No queries found.
@@ -210,10 +225,11 @@ const Querypage = () => {
           ))
         )}
 
-        {/* ✅ Reply Dialog */}
+        {/* Reply Dialog */}
         <Dialog open={openReply} onClose={() => setOpenReply(false)}>
           <DialogTitle>Reply to {selectedQuery?.email}</DialogTitle>
           <DialogContent>
+            {replyError && <Alert severity="error">{replyError}</Alert>}
             <TextField
               fullWidth
               multiline
@@ -228,10 +244,7 @@ const Querypage = () => {
             <Button onClick={() => setOpenReply(false)}>Cancel</Button>
             <Button
               variant="contained"
-              sx={{
-                backgroundColor: "#800000",
-                "&:hover": { backgroundColor: "#a52a2a" },
-              }}
+              sx={{ backgroundColor: "#800000", "&:hover": { backgroundColor: "#a52a2a" } }}
               onClick={handleSendReply}
             >
               Send Reply
