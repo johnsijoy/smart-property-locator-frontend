@@ -51,6 +51,7 @@ const LoginPage = () => {
     setLoading(true);
     try {
       const success = await handleLogin(email.trim(), password, selectedRole);
+
       setLoading(false);
 
       if (success) {
@@ -134,15 +135,14 @@ const LoginPage = () => {
             </Alert>
           )}
 
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+        <TextField
+  margin="normal"
+  required
+  fullWidth
+  label="Email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+/>
 
           <TextField
             margin="normal"

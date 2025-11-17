@@ -36,18 +36,19 @@ export const AuthProvider = ({ children }) => {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }), // 👈 email
+      body: JSON.stringify({ email, password }), // send email
     });
 
     const data = await response.json();
 
-    if (response.ok && data.access) {
+    if (response.ok) {
+      // Save tokens & user info
       localStorage.setItem("access", data.access);
       localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("role", data.role || role.toLowerCase());
-      localStorage.setItem("username", email); // store email if needed
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("username", data.username);
 
-      setUser({ username: email, role: data.role || role.toLowerCase() });
+      setUser({ username: data.username, role: data.role });
       setToken(data.access);
       return true;
     } else {
@@ -59,7 +60,6 @@ export const AuthProvider = ({ children }) => {
     return false;
   }
 };
-
 
   // --------------------------
   // Registration (Buyer only)
