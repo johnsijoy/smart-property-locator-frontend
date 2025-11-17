@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 
 const AuthContext = createContext();
-
 const API_BASE = "https://smart-property-locator-backend-2.onrender.com/api/accounts/";
 
 export const AuthProvider = ({ children }) => {
@@ -11,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("access") || null);
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on mount
+  // Load user from localStorage
   useEffect(() => {
     const savedRole = localStorage.getItem("role");
     const savedUsername = localStorage.getItem("username");
@@ -24,24 +23,19 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // Buyer/Admin Login
+  // --------------------------
+  // Login (Buyer/Admin)
+  // --------------------------
   const handleLogin = async (username, password, role) => {
     try {
-      const url =
-        role.toLowerCase() === "admin"
-          ? `${API_BASE}admin-login/`
-          : `${API_BASE}login/`;
+      const url = role.toLowerCase() === "admin"
+        ? `${API_BASE}admin-login/`
+        : `${API_BASE}login/`;
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      const response = await axios.post(url, { username, password });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (response.ok && data.access) {
-        // Save tokens & role
+      if (data.access) {
         localStorage.setItem("access", data.access);
         localStorage.setItem("refresh", data.refresh);
         localStorage.setItem("role", data.role || role.toLowerCase());
@@ -55,12 +49,15 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Login error:", error.response?.data || error.message);
+      alert(error.response?.data?.non_field_errors?.[0] || "Login failed");
       return false;
     }
   };
 
-  // Buyer Registration
+  // --------------------------
+  // Registration (Buyer only)
+  // --------------------------
   const handleRegister = async (username, email, password) => {
     try {
       const response = await axios.post(
@@ -68,28 +65,24 @@ export const AuthProvider = ({ children }) => {
         { username, email, password },
         { headers: { "Content-Type": "application/json" } }
       );
-
-      console.log("✅ Registration successful:", response.data);
-      return true; // success
+      console.log("Registration success:", response.data);
+      return true;
     } catch (error) {
-      console.error("❌ Registration error:", error.response?.data || error.message);
+      const err = error.response?.data;
+      console.error("Registration error:", err || error.message);
 
-      // Show readable error
-      if (error.response?.data?.username) {
-        alert("Username: " + error.response.data.username[0]);
-      } else if (error.response?.data?.email) {
-        alert("Email: " + error.response.data.email[0]);
-      } else if (error.response?.data?.password) {
-        alert("Password: " + error.response.data.password[0]);
-      } else {
-        alert("Registration failed. Try again.");
-      }
+      if (err?.username) alert("Username: " + err.username[0]);
+      else if (err?.email) alert("Email: " + err.email[0]);
+      else if (err?.password) alert("Password: " + err.password[0]);
+      else alert("Registration failed. Try again.");
 
-      return false; // failed
+      return false;
     }
   };
 
+  // --------------------------
   // Logout
+  // --------------------------
   const handleLogout = () => {
     localStorage.clear();
     setUser(null);
@@ -114,5 +107,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook for easier usage
 export const useAuth = () => useContext(AuthContext);
